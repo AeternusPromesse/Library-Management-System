@@ -2,6 +2,7 @@ package com.library.service;
 
 import com.google.gson.reflect.TypeToken;
 import com.library.model.Book;
+import com.library.model.BookCopy;
 import com.library.model.Loan;
 import com.library.model.User;
 import com.library.util.JsonUtil;
@@ -34,6 +35,7 @@ public class LibraryService {
     private int nextUserId = 1;
     private int nextBookId = 1;
     private int nextLoanId = 1;
+    private int nextCopyId = 1;
 
     public LibraryService() {
         dataDir = Paths.get(System.getProperty("user.dir"), "data");
@@ -54,6 +56,32 @@ public class LibraryService {
 
         if (!Files.exists(usersFile) && !Files.exists(booksFile)) {
             seedDefaultData();
+        }
+        synchronizeCopies();
+    }
+
+    /** 为所有图书补齐物理副本，并计算下一个副本ID。 */
+    private void synchronizeCopies() {
+        int maxCopyId = 0;
+        for (Book book : books) {
+            if (book.getCopies() == null) {
+                continue;
+            }
+            for (BookCopy c : book.getCopies()) {
+                maxCopyId = Math.max(maxCopyId, c.getCopyId());
+            }
+        }
+        nextCopyId = maxCopyId + 1;
+
+        for (Book book : books) {
+            List<BookCopy> copies = book.getCopies();
+            if (copies == null) {
+                copies = new ArrayList<>();
+                book.setCopies(copies);
+            }
+            while (copies.size() < book.getTotal()) {
+                copies.add(new BookCopy(nextCopyId++, book.getId()));
+            }
         }
     }
 
@@ -114,6 +142,9 @@ public class LibraryService {
 
     public Book addBook(String title, String author, String type, int total) {
         Book book = new Book(nextBookId++, title, author, type, total);
+        for (int i = 0; i < total; i++) {
+            book.addCopy(new BookCopy(nextCopyId++, book.getId()));
+        }
         books.add(book);
         saveAll();
         return book;
@@ -151,8 +182,14 @@ public class LibraryService {
         if (book == null || book.getAvailable() <= 0) {
             return null;
         }
+        BookCopy copy = book.getAvailableCopy();
+        if (copy == null) {
+            return null;
+        }
+        copy.borrow();
         LocalDate today = LocalDate.now();
         Loan loan = new Loan(nextLoanId++, bookId, userId, today, today.plusDays(Loan.LOAN_DAYS), null);
+        loan.setCopyId(copy.getCopyId());
         loans.add(loan);
         book.setAvailable(book.getAvailable() - 1);
         saveAll();
@@ -167,10 +204,16 @@ public class LibraryService {
         if (target == null) {
             return false;
         }
-        target.setReturnDate(LocalDate.now());
+        target.returnBook(); // 设置归还日期并计算逾期罚款
         Book book = findBook(bookId);
         if (book != null) {
             book.setAvailable(book.getAvailable() + 1);
+            if (book.getCopies() != null && target.getCopyId() > 0) {
+                book.getCopies().stream()
+                        .filter(c -> c.getCopyId() == target.getCopyId())
+                        .findFirst()
+                        .ifPresent(BookCopy::returnCopy);
+            }
         }
         saveAll();
         return true;

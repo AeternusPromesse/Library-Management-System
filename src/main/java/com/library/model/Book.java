@@ -1,5 +1,8 @@
 package com.library.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 图书实体类。
  */
@@ -17,6 +20,7 @@ public class Book {
     private String type;     // 图书类型
     private int total;       // 总库存
     private int available;   // 当前可借数量
+    private List<BookCopy> copies = new ArrayList<>(); // 物理副本列表
 
     public Book() {
     }
@@ -76,6 +80,30 @@ public class Book {
 
     public void setAvailable(int available) {
         this.available = available;
+    }
+
+    public List<BookCopy> getCopies() {
+        return copies;
+    }
+
+    public void setCopies(List<BookCopy> copies) {
+        this.copies = copies;
+    }
+
+    /** 新增一个物理副本 */
+    public void addCopy(BookCopy copy) {
+        if (this.copies == null) {
+            this.copies = new ArrayList<>();
+        }
+        this.copies.add(copy);
+    }
+
+    /** 获取一个可借阅的副本（无则返回 null） */
+    public BookCopy getAvailableCopy() {
+        if (copies == null) {
+            return null;
+        }
+        return copies.stream().filter(BookCopy::isAvailable).findFirst().orElse(null);
     }
 
     @Override
