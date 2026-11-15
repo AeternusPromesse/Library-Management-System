@@ -76,4 +76,12 @@ public class MyCalendar {
         sb.append("\n");
         return sb.toString();
     }
+
+    /**
+     * 演示入口：打印指定日期及当前日期的当月日历。
+     */
+    public static void main(String[] args) {
+        System.out.println(new MyCalendar(2026, 3, 24));
+        System.out.println(new MyCalendar());
+    }
 }
