@@ -1,49 +1,35 @@
 package com.library.model;
 
+import java.time.LocalDateTime;
+
 /**
- * 用户实体类。
+ * 用户实体类：管理员 Admin、学生 Student、教师 Teacher、操作员 Operator 的父类。
  */
-public class User {
+public class User extends Base {
 
-    /** 用户角色 */
-    public enum Role {
-        ADMIN("管理员"),
-        BORROWER("借阅用户");
+    /** 角色常量 */
+    public static final String ROLE_ADMIN = "admin";
+    public static final String ROLE_STUDENT = "student";
+    public static final String ROLE_TEACHER = "teacher";
+    public static final String ROLE_OPERATOR = "operator";
 
-        private final String label;
-
-        Role(String label) {
-            this.label = label;
-        }
-
-        public String getLabel() {
-            return label;
-        }
-    }
-
-    private int id;          // 用户ID
-    private String username; // 用户名
-    private String password; // 密码
-    private Role role;       // 角色
-    private String major;    // 专业（用于按专业统计）
+    private String username;         // 用户名（姓名）
+    private String password;          // 密码
+    private String phone;            // 手机号
+    private String major;            // 专业
+    private String role;             // 角色：admin / student / teacher / operator
+    private LocalDateTime loginTime; // 最近登录时间
 
     public User() {
     }
 
-    public User(int id, String username, String password, Role role, String major) {
-        this.id = id;
+    public User(int id, String username, String password, String phone, String major, String role) {
+        setId(id);
         this.username = username;
         this.password = password;
-        this.role = role;
+        this.phone = phone;
         this.major = major;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
+        this.role = role;
     }
 
     public String getUsername() {
@@ -62,12 +48,12 @@ public class User {
         this.password = password;
     }
 
-    public Role getRole() {
-        return role;
+    public String getPhone() {
+        return phone;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String getMajor() {
@@ -78,9 +64,27 @@ public class User {
         this.major = major;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public LocalDateTime getLoginTime() {
+        return loginTime;
+    }
+
+    public void setLoginTime(LocalDateTime loginTime) {
+        this.loginTime = loginTime;
+    }
+
     @Override
     public String toString() {
-        return String.format("ID:%d | 用户名:%s | 角色:%s | 专业:%s",
-                id, username, role.getLabel(), (major == null || major.isEmpty()) ? "-" : major);
+        return String.format("ID:%d | 用户名:%s | 角色:%s | 专业:%s | 手机:%s",
+                getId(), username, role,
+                (major == null || major.isEmpty()) ? "-" : major,
+                (phone == null || phone.isEmpty()) ? "-" : phone);
     }
 }
